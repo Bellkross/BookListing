@@ -20,30 +20,18 @@ import java.util.ArrayList;
 
 public class QueryUtils {
 
-    private static final String LOG_TAG = "QueryUtils";
+    private static final String LOG_TAG = QueryUtils.class.getSimpleName();
+    private static final String API_KEY = "AIzaSyDTBzWUz_-qfL5USK0AFMcPO5rhC7sCaAA";
 
     private QueryUtils() {
     }
 
-    public static ArrayList<Book> fetchBooksData(String requestUrl){
+    public static ArrayList<Book> fetchBooksData(String requestUrl) {
         URL url = stringToUrl(requestUrl);
 
         String jsonResponse = null;
         try {
             jsonResponse = makeHttpRequest(url);
-        } catch (IOException e) {
-            Log.e(LOG_TAG, "Error closing input stream", e);
-        }
-
-        ArrayList<Book> books = fromJsonToBooks(jsonResponse);
-
-        return books;
-    }
-
-    public static ArrayList<Book> fetchBooksData(URL requestUrl){
-        String jsonResponse = null;
-        try {
-            jsonResponse = makeHttpRequest(requestUrl);
         } catch (IOException e) {
             Log.e(LOG_TAG, "Error closing input stream", e);
         }
@@ -63,6 +51,7 @@ public class QueryUtils {
         InputStream inputStream = null;
         try {
             urlConnection = (HttpURLConnection) url.openConnection();
+            urlConnection.addRequestProperty("api_key", API_KEY);
             urlConnection.setReadTimeout(10000 /* milliseconds */);
             urlConnection.setConnectTimeout(15000 /* milliseconds */);
             urlConnection.setRequestMethod("GET");
@@ -87,7 +76,7 @@ public class QueryUtils {
         return jsonResponse;
     }
 
-    public static ArrayList<Book> fromJsonToBooks(String booksJson){
+    public static ArrayList<Book> fromJsonToBooks(String booksJson) {
         if (booksJson.isEmpty()) {
             return null;
         }
@@ -103,22 +92,31 @@ public class QueryUtils {
             String author;
 
             int pageCount;
-            long publishedDate;
+            String publishedDate;
             String title;
             String url;
-            String authors = "";
+            String authors;
 
             for (int i = 0; i < items.length(); ++i) {
+                authors = "";
                 book = items.getJSONObject(i);
                 volumeInfo = (JSONObject) book.get("volumeInfo");
 
-                pageCount = volumeInfo.getInt("pageCount");
-                publishedDate = volumeInfo.getLong("publishedDate");
+                if (!volumeInfo.isNull("pageCount")) {
+                    pageCount = volumeInfo.getInt("pageCount");
+                } else {
+                    pageCount = -1;
+                }
+                publishedDate = volumeInfo.getString("publishedDate");
                 title = volumeInfo.getString("title");
-                jsonAuthors = volumeInfo.getJSONArray("authors");
-                for (int j = 0; j < jsonAuthors.length(); ) {
-                    author = (String) jsonAuthors.get(i);
-                    authors += (++j) < jsonAuthors.length() ? author + ',' : author;
+                if (!volumeInfo.isNull("authors")) {
+                    jsonAuthors = volumeInfo.getJSONArray("authors");
+                    for (int j = 0; j < jsonAuthors.length();) {
+                        author = jsonAuthors.getString(j);
+                        authors += (++j) < jsonAuthors.length() ? author + ',' : author;
+                    }
+                } else {
+                    authors = "Have no authors";
                 }
                 url = volumeInfo.getString("canonicalVolumeLink");
 
@@ -126,7 +124,8 @@ public class QueryUtils {
             }
 
         } catch (JSONException e) {
-            Log.e(LOG_TAG, "Problem parsing the earthquake JSON results", e);
+            Log.e(LOG_TAG, "Problem parsing the book JSON results", e);
+            return new ArrayList<>();
         }
 
         return books;

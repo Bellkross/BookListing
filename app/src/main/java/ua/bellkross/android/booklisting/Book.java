@@ -5,11 +5,11 @@ public class Book {
 
     private String mTitle;
     private String mAuthors;
-    private long mPublishedDate;
+    private String mPublishedDate;
     private int mPageCount;
     private String mUrl;
 
-    public Book(String title, String authors, long publishedDate, int pageCount, String url) {
+    public Book(String title, String authors, String publishedDate, int pageCount, String url) {
         mTitle = title;
         mAuthors = authors;
         mPublishedDate = publishedDate;
@@ -33,11 +33,11 @@ public class Book {
         mAuthors = authors;
     }
 
-    public long getPublishedDate() {
+    public String getPublishedDate() {
         return mPublishedDate;
     }
 
-    public void setPublishedDate(long publishedDate) {
+    public void setPublishedDate(String publishedDate) {
         mPublishedDate = publishedDate;
     }
 
